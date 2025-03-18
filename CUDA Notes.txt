@@ -1,0 +1,50 @@
+1. Vector Addition in CUDA 
+
+
+Lets say A and B are two input vectors of size 2 X 5
+Concepts used in CUDA to solve this : 
+Threads -> individual computations
+Blocks -> Group of threads executing together
+Grid -> Collection of Blocks covering all computations
+Global Memory -> Shared across all threads 
+
+
+Kernel Function : __global__ void vector_add() -> runs on GPU, called from CPU 
+
+unique index (idx) calculator for every thread : 
+
+For Row Index : idx = blockIdx.y * blockIdx.y + threadIdx.y
+For Column Index : idx = blockIdx.x * blockIdx.x + threadIdx.x 
+
+dim3 -> vector type based on uint3
+dim3 threadsPerBlock(16,16) -> 16x16 = 256 threads
+blocksPerGrid -> No. Of Blocks in each dimension
+
+(cols + threadsPerBlock.x - 1) / threadsPerBlock.x ensures enough blocks are launched.
+(rows + threadsPerBlock.y - 1) / threadsPerBlock.y does the same for rows.
+
+
+matrix_add<<<blocksPerGrid, threadsPerBlock>>>(...)
+cudaDeviceSynchronize() ensures kernel execution completes before moving forward.
+
+
+cudaMalloc((void **)&d_A, N * sizeof(float));
+Above line is for allocating memory on GPU 
+
+
+cudaMemcpy(d_A, h_A, N * sizeof(float), cudaMemcpyHostToDevice);
+cudaMemcpy -> transfer data from CPU (host) to GPU (device)
+
+
+
+solve(d_A, d_B, d_C, ROWS, COLS);
+Launches the kernel
+
+
+Copying Data back to host : 
+cudaMemcpy(h_C, d_C, N * sizeof(float), cudaMemcpyDeviceToHost);
+
+
+print the result matrix 
+
+free the allocated memory using cudaFree()
